@@ -91,9 +91,11 @@ function loadExisting() {
   const m = src.match(/ENRICHMENT: Record<string, Partial<Product>> = (\{[\s\S]*\});\s*$/);
   if (!m) return {};
   try {
-    return JSON.parse(m[1].replace(/'/g, '"').replace(/,(\s*[}\]])/g, '$1'));
-  } catch {
-    return {};
+    return JSON.parse(m[1].replace(/,(\s*[}\]])/g, '$1'));
+  } catch (e) {
+    // 読めないまま上書きすると既存の取り込み結果を失うので、ここで止める
+    console.error(`${OUT} を読み取れませんでした。中断します。`, e.message);
+    process.exit(1);
   }
 }
 

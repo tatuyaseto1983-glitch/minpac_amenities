@@ -3,7 +3,7 @@ import type { Product } from '../types';
 /**
  * 実物の商品情報（商品ページURL・画像・価格）。
  *
- * このファイルは `npm run enrich` で自動生成します。手で書き換えても構いません。
+ * このファイルは `npm run enrich` などで自動生成します。手で書き換えても構いません。
  * 商品リストのうち、ここに書かれた項目だけが上書きされます。
  * 最終更新: 2026-09-08
  */
@@ -427,6 +427,21 @@ export const ENRICHMENT: Record<string, Partial<Product>> = {
     "productUrl": "https://item.rakuten.co.jp/enetroom/561549/?rafcid=wsc_i_is_3482579d-2a12-4f6d-8211-55858c0e564f",
     "matchedName": "《SALE★9,801円→8,980円》電子レンジ アイリスオーヤマ 17L 単機能 ヘルツフリー 調理 ターンテーブル レンジ 全国対応 西日本 東日本 単機能 レンジ シンプル 小型 軽量 簡単操作 一人暮らし 新生活 IMB-T178【AR対応商品】",
     "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/enetroom/cabinet/ranking/561549rank.jpg?_ex=300x300"
+  },
+  "osh-01": {
+    "imageUrl": "https://m.media-amazon.com/images/I/51SP752fKNL._AC_SL1000_.jpg"
+  },
+  "osh-02": {
+    "imageUrl": "https://cdn.askul.co.jp/img/product/3L1/5312360_3L1.jpg"
+  },
+  "osh-03": {
+    "imageUrl": "https://m.media-amazon.com/images/I/61RLrKDWEQL._AC_SL1148_.jpg"
+  },
+  "osh-04": {
+    "imageUrl": "https://hito-hira.jp/common/images/ogp.png"
+  },
+  "osh-05": {
+    "imageUrl": "https://m.media-amazon.com/images/I/51SP752fKNL._AC_SL1000_.jpg"
   },
   "ot-01": {
     "productUrl": "https://item.rakuten.co.jp/toppin/curiace-ct-fitting4/?rafcid=wsc_i_is_3482579d-2a12-4f6d-8211-55858c0e564f",
