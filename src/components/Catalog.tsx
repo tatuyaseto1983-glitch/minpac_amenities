@@ -159,6 +159,12 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
                     {items.map((p) => (
                       <td key={p.id} className={`name-cell ${state.selections[p.id] ? 'selected-col' : ''}`}>
                         {p.name}
+                        {p.matchedName && p.matchedName !== p.name && (
+                          <span className="price-note" title={p.matchedName}>
+                            実物: {p.matchedName.slice(0, 28)}
+                            {p.matchedName.length > 28 ? '…' : ''}
+                          </span>
+                        )}
                       </td>
                     ))}
                   </tr>

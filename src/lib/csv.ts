@@ -16,6 +16,7 @@ const HEADERS = [
   'productUrl',
   'imageUrl',
   'searchKeyword',
+  'matchedName',
   'priceNote',
 ] as const;
 
@@ -42,6 +43,7 @@ export function productsToCsv(products: Product[]): string {
       p.productUrl ?? '',
       p.imageUrl ?? '',
       p.searchKeyword ?? '',
+      p.matchedName ?? '',
       p.priceNote ?? '',
     ]
       .map(esc)
@@ -126,6 +128,7 @@ export function csvToProducts(text: string): { products: Product[]; errors: stri
       productUrl: get('productUrl') || undefined,
       imageUrl: get('imageUrl') || undefined,
       searchKeyword: get('searchKeyword') || undefined,
+      matchedName: get('matchedName') || undefined,
       priceNote: get('priceNote') || undefined,
       custom: true,
     });

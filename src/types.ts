@@ -43,6 +43,8 @@ export interface Product {
   imageUrl?: string;
   /** 商品を探すときの検索語。空なら商品名を使う */
   searchKeyword?: string;
+  /** 取り込んだ実物の商品名（検索で当たった商品） */
+  matchedName?: string;
   costType: CostType;
   /** 消耗品のとき: 減り方の基準 */
   consumeBasis?: ConsumeBasis;

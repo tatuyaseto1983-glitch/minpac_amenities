@@ -13,7 +13,10 @@
  *   --group <名前>    小分類を限定（例: --group おしぼり）
  *   --ids a,b,c       商品IDを直接指定
  *   --limit <数>      処理する件数の上限
- *   --price           価格も楽天の実売価格で置き換える（既定は URL と画像のみ）
+ *   --price           価格も楽天の実売価格で置き換える
+ *                     ※ 検索で当たった商品の入数（何枚入りか）はこちらの想定と
+ *                       違うことがあるため、既定では価格に触りません。
+ *                       使うときは入数もあわせて確認してください。
  *   --overwrite       すでに取り込み済みの商品も取り直す
  *   --dry             書き込まずに結果を表示するだけ
  */
@@ -92,13 +95,36 @@ function loadExisting() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** 検索に邪魔な言葉を落とす */
+function toKeyword(p) {
+  if (p.searchKeyword) return p.searchKeyword;
+  return p.name
+    .replace(/[（(][^）)]*[）)]/g, ' ')
+    .replace(/追加分|\d+人分|\d+名分/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** 明らかに用途の違う検索結果を弾く */
+function isPlausible(p, item) {
+  // ふるさと納税の返礼品は備品の仕入れには使えない
+  if (/ふるさと納税/.test(item.name)) return false;
+  if (/中古|ジャンク/.test(item.name)) return false;
+  // 買い切りの設備は、想定価格とかけ離れていたら別物とみなす
+  if (p.costType === 'equipment' && p.price > 0 && item.price > 0) {
+    const ratio = item.price / p.price;
+    if (ratio < 0.2 || ratio > 5) return false;
+  }
+  return true;
+}
+
 /** 画像URLをサムネイルから少し大きいサイズに差し替える */
 const upscale = (url) => url.replace(/_ex=\d+x\d+/, '_ex=300x300');
 
 async function search(keyword) {
   const url =
     `${API}?applicationId=${encodeURIComponent(appId)}` +
-    `&keyword=${encodeURIComponent(keyword)}&hits=3&imageFlag=1&sort=standard&formatVersion=2`;
+    `&keyword=${encodeURIComponent(keyword)}&hits=10&imageFlag=1&sort=standard&formatVersion=2`;
   // アクセスキーはURLに残さないようヘッダーで送る
   const res = await fetch(url, { headers: { accessKey } });
   if (res.status === 429) {
@@ -107,15 +133,13 @@ async function search(keyword) {
   }
   if (!res.ok) throw new Error(`HTTP ${res.status} ${await res.text()}`);
   const json = await res.json();
-  const item = json.Items?.[0];
-  if (!item) return null;
-  return {
+  return (json.Items ?? []).map((item) => ({
     name: item.itemName,
     productUrl: item.itemUrl,
     imageUrl: item.mediumImageUrls?.[0] ? upscale(item.mediumImageUrls[0]) : undefined,
     price: item.itemPrice,
     shop: item.shopName,
-  };
+  }));
 }
 
 const products = await loadProducts();
@@ -126,6 +150,8 @@ let targets = products.filter((p) => {
   if (idFilter) return idFilter.has(p.id);
   if (values.category && p.category !== values.category) return false;
   if (values.group && p.group !== values.group) return false;
+  // 資料や手入力で実物のURLが入っている商品は、--overwrite でも上書きしない
+  if (p.productUrl) return false;
   if (!values.overwrite && existing[p.id]?.productUrl) return false;
   return true;
 });
@@ -144,15 +170,16 @@ let hit = 0;
 let miss = 0;
 
 for (const [i, p] of targets.entries()) {
-  const keyword = p.searchKeyword || `${p.name}`;
+  const keyword = toKeyword(p);
   process.stdout.write(`[${i + 1}/${targets.length}] ${p.name} … `);
   try {
-    const found = await search(keyword);
+    const candidates = await search(keyword);
+    const found = candidates.find((c) => isPlausible(p, c));
     if (!found) {
-      console.log('見つかりませんでした');
+      console.log(candidates.length ? '条件に合う商品がありませんでした' : '見つかりませんでした');
       miss++;
     } else {
-      const patch = { productUrl: found.productUrl };
+      const patch = { productUrl: found.productUrl, matchedName: found.name };
       if (found.imageUrl) patch.imageUrl = found.imageUrl;
       if (values.price && found.price > 0) {
         patch.price = found.price;
