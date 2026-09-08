@@ -3,6 +3,7 @@ import type { CategoryId, Product } from '../types';
 import { CATEGORIES } from '../data/catalog';
 import { csvToProducts, download, productsToCsv } from '../lib/csv';
 import { unitPrice, yen1 } from '../lib/calc';
+import RakutenImport from './RakutenImport';
 
 interface Props {
   products: Product[];
@@ -61,6 +62,8 @@ export default function ProductAdmin({
         取引先からもらった見積りの金額に書き換えれば、シミュレーションもその金額で計算し直します。
         CSVで書き出して社内で共有し、直したものを読み込む使い方もできます。
       </div>
+
+      <RakutenImport products={products} category={cat} onChange={onChange} />
 
       <div className="card">
         <h2>商品リストの管理</h2>

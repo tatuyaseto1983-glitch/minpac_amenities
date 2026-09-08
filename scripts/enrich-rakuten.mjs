@@ -27,7 +27,6 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
-const API = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
 const OUT = 'src/data/enrichment.ts';
 /** 楽天APIは1秒1リクエストまで */
 const INTERVAL_MS = 1100;
@@ -64,20 +63,25 @@ if (!appId || !accessKey) {
   process.exit(1);
 }
 
-/** TypeScript の商品リストを読み込む */
-async function loadProducts() {
+/** TypeScript の商品リストと判定ロジックを読み込む */
+async function loadTs() {
   const dir = mkdtempSync(join(tmpdir(), 'catalog-'));
-  const outfile = join(dir, 'catalog.mjs');
+  const entry = join(dir, 'entry.ts');
+  const outfile = join(dir, 'bundle.mjs');
+  writeFileSync(
+    entry,
+    `export { SAMPLE_PRODUCTS } from '${process.cwd()}/src/data/catalog.ts';\n` +
+      `export * as lib from '${process.cwd()}/src/lib/rakuten.ts';\n`,
+  );
   await build({
-    entryPoints: ['src/data/catalog.ts'],
+    entryPoints: [entry],
     bundle: true,
     format: 'esm',
     platform: 'node',
     outfile,
     logLevel: 'silent',
   });
-  const mod = await import(pathToFileURL(outfile).href);
-  return mod.SAMPLE_PRODUCTS;
+  return import(pathToFileURL(outfile).href);
 }
 
 /** すでに取り込み済みの内容を読む */
@@ -95,54 +99,17 @@ function loadExisting() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** 検索に邪魔な言葉を落とす */
-function toKeyword(p) {
-  if (p.searchKeyword) return p.searchKeyword;
-  return p.name
-    .replace(/[（(][^）)]*[）)]/g, ' ')
-    .replace(/追加分|\d+人分|\d+名分/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/** 明らかに用途の違う検索結果を弾く */
-function isPlausible(p, item) {
-  // ふるさと納税の返礼品は備品の仕入れには使えない
-  if (/ふるさと納税/.test(item.name)) return false;
-  if (/中古|ジャンク/.test(item.name)) return false;
-  // 買い切りの設備は、想定価格とかけ離れていたら別物とみなす
-  if (p.costType === 'equipment' && p.price > 0 && item.price > 0) {
-    const ratio = item.price / p.price;
-    if (ratio < 0.2 || ratio > 5) return false;
-  }
-  return true;
-}
-
-/** 画像URLをサムネイルから少し大きいサイズに差し替える */
-const upscale = (url) => url.replace(/_ex=\d+x\d+/, '_ex=300x300');
-
-async function search(keyword) {
-  const url =
-    `${API}?applicationId=${encodeURIComponent(appId)}` +
-    `&keyword=${encodeURIComponent(keyword)}&hits=10&imageFlag=1&sort=standard&formatVersion=2`;
-  // アクセスキーはURLに残さないようヘッダーで送る
-  const res = await fetch(url, { headers: { accessKey } });
+async function search(p) {
+  const res = await fetch(lib.buildSearchUrl(appId, lib.toKeyword(p)), { headers: { accessKey } });
   if (res.status === 429) {
     await sleep(5000);
-    return search(keyword);
+    return search(p);
   }
   if (!res.ok) throw new Error(`HTTP ${res.status} ${await res.text()}`);
-  const json = await res.json();
-  return (json.Items ?? []).map((item) => ({
-    name: item.itemName,
-    productUrl: item.itemUrl,
-    imageUrl: item.mediumImageUrls?.[0] ? upscale(item.mediumImageUrls[0]) : undefined,
-    price: item.itemPrice,
-    shop: item.shopName,
-  }));
+  return lib.parseItems(await res.json());
 }
 
-const products = await loadProducts();
+const { SAMPLE_PRODUCTS: products, lib } = await loadTs();
 const existing = loadExisting();
 const idFilter = values.ids ? new Set(values.ids.split(',').map((s) => s.trim())) : null;
 
@@ -170,11 +137,10 @@ let hit = 0;
 let miss = 0;
 
 for (const [i, p] of targets.entries()) {
-  const keyword = toKeyword(p);
   process.stdout.write(`[${i + 1}/${targets.length}] ${p.name} … `);
   try {
-    const candidates = await search(keyword);
-    const found = candidates.find((c) => isPlausible(p, c));
+    const candidates = await search(p);
+    const found = candidates.find((c) => lib.isPlausible(p, c));
     if (!found) {
       console.log(candidates.length ? '条件に合う商品がありませんでした' : '見つかりませんでした');
       miss++;
