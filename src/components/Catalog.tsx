@@ -24,6 +24,7 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
   const [cat, setCat] = useState<CategoryId>('amenity');
   const [keyword, setKeyword] = useState('');
   const [onlySelected, setOnlySelected] = useState(false);
+  const [group, setGroup] = useState<string>('all');
 
   const demand = useMemo(() => calcDemand(state.settings), [state.settings]);
 
@@ -36,10 +37,16 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
     return map;
   }, [state.selections, state.products]);
 
+  const groupNames = useMemo(
+    () => [...new Set(state.products.filter((p) => p.category === cat).map((p) => p.group))],
+    [state.products, cat],
+  );
+
   const groups = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     const list = state.products.filter((p) => {
       if (p.category !== cat) return false;
+      if (group !== 'all' && p.group !== group) return false;
       if (onlySelected && !state.selections[p.id]) return false;
       if (!kw) return true;
       return (p.name + p.feature + p.group).toLowerCase().includes(kw);
@@ -51,7 +58,7 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
       map.set(p.group, arr);
     }
     return [...map.entries()];
-  }, [state.products, state.selections, cat, keyword, onlySelected]);
+  }, [state.products, state.selections, cat, group, keyword, onlySelected]);
 
   const activeCat = CATEGORIES.find((c) => c.id === cat)!;
 
@@ -69,7 +76,10 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
             key={c.id}
             className={c.id === cat ? 'active' : ''}
             style={c.id === cat ? { background: c.color } : undefined}
-            onClick={() => setCat(c.id)}
+            onClick={() => {
+              setCat(c.id);
+              setGroup('all');
+            }}
           >
             {c.name}
             {selectedCountByCat[c.id] ? <span className="count">{selectedCountByCat[c.id]}</span> : null}
@@ -89,6 +99,19 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
+          <select
+            className="btn"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            aria-label="小分類で絞り込み"
+          >
+            <option value="all">小分類：すべて（{groupNames.length}種類）</option>
+            {groupNames.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
           <label className="switch">
             <input
               type="checkbox"
@@ -97,6 +120,9 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
             />
             選んだものだけ表示
           </label>
+          <span className="footer-note">
+            この分類に{state.products.filter((p) => p.category === cat).length}点
+          </span>
         </div>
 
         {groups.length === 0 && <div className="empty">該当する商品がありません。</div>}
