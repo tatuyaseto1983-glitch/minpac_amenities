@@ -5,7 +5,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const TITLE = '民泊 備品・アメニティ 費用シミュレーター';
+const TITLE = '民泊備品シミュレーター';
 const css = readFileSync('dist/app.css', 'utf8');
 // </script> がJS中に現れても壊れないようにする
 const js = readFileSync('dist/app.js', 'utf8').replace(/<\/script>/gi, '<\\/script>');
