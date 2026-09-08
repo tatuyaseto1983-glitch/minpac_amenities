@@ -1,4 +1,5 @@
 import type { Category, Product } from '../types';
+import { ENRICHMENT } from './enrichment';
 
 export const CATEGORIES: Category[] = [
   {
@@ -40,6 +41,8 @@ function consumable(o: {
   basis: NonNullable<Product['consumeBasis']>;
   qty: number;
   url?: string;
+  image?: string;
+  keyword?: string;
   priceNote?: string;
 }): Product {
   return {
@@ -52,6 +55,8 @@ function consumable(o: {
     unitLabel: o.unitLabel,
     price: o.price,
     productUrl: o.url,
+    imageUrl: o.image,
+    searchKeyword: o.keyword,
     costType: 'consumable',
     consumeBasis: o.basis,
     consumeQty: o.qty,
@@ -70,6 +75,8 @@ function equipment(o: {
   unitLabel?: string;
   lifespanMonths: number;
   url?: string;
+  image?: string;
+  keyword?: string;
   priceNote?: string;
 }): Product {
   return {
@@ -82,13 +89,15 @@ function equipment(o: {
     unitLabel: o.unitLabel ?? '台',
     price: o.price,
     productUrl: o.url,
+    imageUrl: o.image,
+    searchKeyword: o.keyword,
     costType: 'equipment',
     lifespanMonths: o.lifespanMonths,
     priceNote: o.priceNote ?? '参考値',
   };
 }
 
-export const SAMPLE_PRODUCTS: Product[] = [
+const BASE_PRODUCTS: Product[] = [
   // ── アメニティ・消耗品 ───────────────────────────────
   // おしぼり（添付いただいた比較表の内容）
   consumable({ id: 'osh-01', category: 'amenity', group: 'おしぼり', name: '使い捨ておしぼり 平型', feature: 'シンプル', unitCount: 2400, unitLabel: '枚', price: 3740, basis: 'perGuest', qty: 1, url: 'https://x.gd/VLpFj', priceNote: '提供資料より' }),
@@ -318,3 +327,12 @@ export const SAMPLE_PRODUCTS: Product[] = [
   equipment({ id: 'fr-19', category: 'furniture', group: 'キッチン', name: 'IH対応 鍋・フライパン 追加分', feature: '人数が多い施設向け', unitLabel: 'セット', price: 12000, lifespanMonths: 36 }),
   equipment({ id: 'fr-20', category: 'furniture', group: '家具', name: '布団収納・押入れ整理用品', feature: '見た目を整える', unitLabel: '式', price: 6000, lifespanMonths: 60 }),
 ];
+
+/**
+ * 商品リストに、取得してきた実物の情報（URL・画像・価格）を重ねる。
+ * enrichment.ts は scripts/enrich-rakuten.mjs が生成する。
+ */
+export const SAMPLE_PRODUCTS: Product[] = BASE_PRODUCTS.map((p) => ({
+  ...p,
+  ...(ENRICHMENT[p.id] ?? {}),
+}));

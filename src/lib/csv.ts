@@ -14,6 +14,8 @@ const HEADERS = [
   'consumeQty',
   'lifespanMonths',
   'productUrl',
+  'imageUrl',
+  'searchKeyword',
   'priceNote',
 ] as const;
 
@@ -38,6 +40,8 @@ export function productsToCsv(products: Product[]): string {
       p.consumeQty ?? '',
       p.lifespanMonths ?? '',
       p.productUrl ?? '',
+      p.imageUrl ?? '',
+      p.searchKeyword ?? '',
       p.priceNote ?? '',
     ]
       .map(esc)
@@ -120,6 +124,8 @@ export function csvToProducts(text: string): { products: Product[]; errors: stri
       consumeQty: costType === 'consumable' ? Number(get('consumeQty')) || 1 : undefined,
       lifespanMonths: costType === 'equipment' ? Number(get('lifespanMonths')) || 60 : undefined,
       productUrl: get('productUrl') || undefined,
+      imageUrl: get('imageUrl') || undefined,
+      searchKeyword: get('searchKeyword') || undefined,
       priceNote: get('priceNote') || undefined,
       custom: true,
     });

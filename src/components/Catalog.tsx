@@ -9,11 +9,17 @@ interface Props {
   onSelectionChange: (productId: string, patch: Partial<Selection>) => void;
 }
 
+/** 商品を探すための検索ページ */
+function searchUrl(p: Product): string {
+  return `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(p.searchKeyword || p.name)}/`;
+}
+
 function Thumb({ p }: { p: Product }) {
-  if (p.imageUrl) {
+  const [failed, setFailed] = useState(false);
+  if (p.imageUrl && !failed) {
     return (
       <div className="thumb">
-        <img src={p.imageUrl} alt={p.name} />
+        <img src={p.imageUrl} alt={p.name} loading="lazy" onError={() => setFailed(true)} />
       </div>
     );
   }
@@ -202,7 +208,9 @@ export default function Catalog({ state, onToggle, onSelectionChange }: Props) {
                             {p.productUrl}
                           </a>
                         ) : (
-                          '—'
+                          <a className="ext" href={searchUrl(p)} target="_blank" rel="noreferrer">
+                            楽天市場で探す
+                          </a>
                         )}
                       </td>
                     ))}

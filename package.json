@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "bundle:single": "npm run build && node scripts/inline-build.mjs"
+    "bundle:single": "npm run build && node scripts/inline-build.mjs",
+    "enrich": "node scripts/enrich-rakuten.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

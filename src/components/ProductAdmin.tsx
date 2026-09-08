@@ -139,7 +139,9 @@ export default function ProductAdmin({
                 <th style={{ minWidth: 130 }}>使い方 / 耐用</th>
                 <th style={{ minWidth: 80 }}>使用量</th>
                 <th style={{ minWidth: 90 }}>単価</th>
-                <th style={{ minWidth: 160 }}>URL</th>
+                <th style={{ minWidth: 160 }}>商品ページURL</th>
+                <th style={{ minWidth: 160 }}>画像URL</th>
+                <th style={{ minWidth: 130 }}>検索語</th>
                 <th />
               </tr>
             </thead>
@@ -248,6 +250,20 @@ export default function ProductAdmin({
                     />
                   </td>
                   <td>
+                    <input
+                      value={p.imageUrl ?? ''}
+                      placeholder="https://….jpg"
+                      onChange={(e) => onChange(p.id, { imageUrl: e.target.value })}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      value={p.searchKeyword ?? ''}
+                      placeholder="商品名と別の言葉で探すとき"
+                      onChange={(e) => onChange(p.id, { searchKeyword: e.target.value })}
+                    />
+                  </td>
+                  <td>
                     <button className="btn btn--sm btn--danger" onClick={() => onRemove(p.id)}>
                       削除
                     </button>
@@ -259,6 +275,8 @@ export default function ProductAdmin({
         </div>
         <p className="footer-note">
           「使用量」は、消耗品が1回（1人・1組など）でどれだけ減るかの数です。例：歯ブラシは1人1本なので「1」。
+          「画像URL」に画像のアドレスを入れると、カタログの比較表に写真が出ます。
+          「検索語」は、商品名のままでは目当ての品が見つからないときに使います。
         </p>
       </div>
     </>

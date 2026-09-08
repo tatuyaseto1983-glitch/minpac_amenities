@@ -41,6 +41,8 @@ export interface Product {
   price: number;
   productUrl?: string;
   imageUrl?: string;
+  /** 商品を探すときの検索語。空なら商品名を使う */
+  searchKeyword?: string;
   costType: CostType;
   /** 消耗品のとき: 減り方の基準 */
   consumeBasis?: ConsumeBasis;
