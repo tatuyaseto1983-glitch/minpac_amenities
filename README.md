@@ -34,16 +34,21 @@ npm run bundle:single  # 1枚のHTMLにまとめる（dist-single/）
 
 商品ページのURLと写真は、楽天市場の商品検索API（無料）から自動で取り込めます。
 
-1. https://webservice.rakuten.co.jp/ でアプリIDを取得します（楽天会員IDでログイン、数分で終わります）
-2. 取得したIDを渡して実行します
+1. https://webservice.rakuten.co.jp/ でアプリを登録します（楽天会員IDでログイン、無料）
+   - Application type は「API/Backend Service」
+   - API Access Scopes は「Rakuten Ichiba API」
+   - Allowed IP addresses には、実行するパソコンのグローバルIPを入れます
+2. アプリの詳細画面にある **Application ID** と **Access Key** を渡して実行します
 
 ```bash
 # まずは1グループだけで試す
-RAKUTEN_APP_ID=取得したID npm run enrich -- --group おしぼり
+RAKUTEN_APP_ID=xxxx RAKUTEN_ACCESS_KEY=yyyy npm run enrich -- --group おしぼり
 
 # アメニティ全体を、価格も楽天の実売価格に置き換えて取り込む
-RAKUTEN_APP_ID=取得したID npm run enrich -- --category amenity --price
+RAKUTEN_APP_ID=xxxx RAKUTEN_ACCESS_KEY=yyyy npm run enrich -- --category amenity --price
 ```
+
+Access Key はパスワードにあたります。ファイルに書き込んだり、リポジトリに含めたりしないでください。
 
 結果は `src/data/enrichment.ts` に書き出され、商品リストに重ねて表示されます。
 元の商品リスト（`src/data/catalog.ts`）は書き換えないので、気に入らない結果は

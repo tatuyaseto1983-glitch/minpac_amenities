@@ -1,7 +1,8 @@
 /**
- * 楽天市場の商品検索APIを使って、商品リストに「実物の商品ページURL・画像・価格」を取り込む。
+ * 楽天市場の商品検索API（version 2026-07-01）を使って、
+ * 商品リストに「実物の商品ページURL・画像・価格」を取り込む。
  *
- *   RAKUTEN_APP_ID=xxxxx npm run enrich -- --category amenity --price
+ *   RAKUTEN_APP_ID=xxxx RAKUTEN_ACCESS_KEY=yyyy npm run enrich -- --category amenity --price
  *
  * 結果は src/data/enrichment.ts に書き出され、アプリの商品リストに重ねて表示されます。
  * 元の商品リスト（catalog.ts）は書き換えません。気に入らない結果は
@@ -23,7 +24,7 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
-const API = 'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601';
+const API = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
 const OUT = 'src/data/enrichment.ts';
 /** 楽天APIは1秒1リクエストまで */
 const INTERVAL_MS = 1100;
@@ -42,15 +43,18 @@ const { values } = parseArgs({
 });
 
 const appId = process.env.RAKUTEN_APP_ID;
-if (!appId) {
+const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+if (!appId || !accessKey) {
   console.error(
     [
-      'RAKUTEN_APP_ID が設定されていません。',
+      'RAKUTEN_APP_ID と RAKUTEN_ACCESS_KEY の両方が必要です。',
       '',
-      '1. https://webservice.rakuten.co.jp/ で無料のアプリIDを取得します（楽天会員IDでログイン、数分で終わります）',
-      '2. 取得したIDを渡して実行します',
+      '1. https://webservice.rakuten.co.jp/ でアプリを登録します（無料）',
+      '2. アプリの詳細画面にある Application ID と Access Key を渡して実行します',
       '',
-      '   RAKUTEN_APP_ID=取得したID npm run enrich -- --group おしぼり',
+      '   RAKUTEN_APP_ID=xxxx RAKUTEN_ACCESS_KEY=yyyy npm run enrich -- --group おしぼり',
+      '',
+      '※ Access Key はパスワードにあたります。ファイルに書いたり共有したりしないでください。',
       '',
     ].join('\n'),
   );
@@ -95,7 +99,8 @@ async function search(keyword) {
   const url =
     `${API}?applicationId=${encodeURIComponent(appId)}` +
     `&keyword=${encodeURIComponent(keyword)}&hits=3&imageFlag=1&sort=standard&formatVersion=2`;
-  const res = await fetch(url);
+  // アクセスキーはURLに残さないようヘッダーで送る
+  const res = await fetch(url, { headers: { accessKey } });
   if (res.status === 429) {
     await sleep(5000);
     return search(keyword);
